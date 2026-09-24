@@ -54,4 +54,4 @@ docker-compose.override.yml
 
 # Tooling auxiliar
 .codeviz/
-.github/
+.github/modernize/

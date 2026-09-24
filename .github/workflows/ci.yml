@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Build y tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Compilar y ejecutar tests de todos los módulos
+        run: mvn -B -ntp clean verify
+
+      - name: Subir reportes de tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: "**/target/surefire-reports/**"
+
+  docker:
+    name: Build de imágenes Docker
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build user-service
+        run: docker build -f user-service/Dockerfile -t orderflow-user-service:ci .
+
+      - name: Build orders-service
+        run: docker build -f orders-service/Dockerfile -t orderflow-orders-service:ci .
+
+      - name: Build inventory-service
+        run: docker build -f inventory-service/Dockerfile -t orderflow-inventory-service:ci .
+
+      - name: Build notification-service
+        run: docker build -f notification-service/Dockerfile -t orderflow-notification-service:ci .
